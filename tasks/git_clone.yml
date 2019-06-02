@@ -3,4 +3,4 @@
   git:
     repo: "{{ anyenv_repo }}"
     dest: "{{ anyenv_install_dir }}"
-    branch: "{{ anyenv_version }}"
+    version: "{{ anyenv_version }}"

@@ -1,14 +1,10 @@
 ---
 - include_tasks: "brew_install.yml"
-  when: >
-    anyenv_prefer_brew and 
-    ansible_os_family == "Darwin"
+  when: anyenv_prefer_brew and ansible_os_family == "Darwin"
   register: anyenv_installed
 
 - include_tasks: "git_clone.yml"
-  when: >
-    not anyenv_prefer_brew or 
-    ansible_os_family != "Darwin"
+  when: not anyenv_prefer_brew or ansible_os_family != "Darwin"
   register: anyenv_installed
 
 - block:
@@ -18,16 +14,18 @@
       PATH: "{{ anyenv_install_dir }}/bin:{{ ansible_env.PATH }}"
 
   rescue:
-    - set_fact:
+    - name: Obtain debug information
+      set_fact:
         anyenv_config_home: "{{ ansible_env.XDG_CONFIG_HOME | default(ansible_env.HOME + '/.config') }}"
         anyenv_init_path: "{{ anyenv_config_home }}/anyenv/anyenv-install"
-  
+
     - name: Ensure anyenv initialized
       stat:
         path: "{{ anyenv_init_path }}"
       register: anyenv_initialized
-    
-    - fail:
+
+    - name: Fail if anyenv is not initialized
+      fail:
         msg: "Anyenv initialization failed"
       when: not anyenv_initialized.stat.exists
 
@@ -41,7 +39,7 @@
 - name: Install plugins
   git:
     repo: "{{ item.repo }}"
-    branch: "{{ item.version | default('master') }}"
+    version: "{{ item.version | default('master') }}"
     dest: "{{ anyenv_install_dir }}/plugins/{{ item.repo | urlsplit('path') | basename }}"
   loop: "{{ anyenv_plugins }}"
 
@@ -52,9 +50,3 @@
   environment:
     PATH: "{{ anyenv_install_dir }}/bin:{{ ansible_env.PATH }}"
   loop: "{{ anyenv_envs }}"
-
-- name: Update all envs
-  shell: "anyenv update"
-  environment:
-    PATH: "{{ anyenv_install_dir }}/bin:{{ ansible_env.PATH }}"
-  when: anyenv_update_envs
