@@ -1,24 +1,19 @@
 ---
 - include_tasks: "brew_install.yml"
   when: anyenv_prefer_brew and ansible_os_family == "Darwin"
-  register: anyenv_installed
 
 - include_tasks: "git_clone.yml"
   when: not anyenv_prefer_brew or ansible_os_family != "Darwin"
-  register: anyenv_installed
 
 - block:
   - name: Initialize anyenv
-    shell: "anyenv install --init"
+    shell: "anyenv install --force-init"
     environment:
       PATH: "{{ anyenv_install_dir }}/bin:{{ ansible_env.PATH }}"
+    args:
+      creates: "{{ anyenv_init_path }}"
 
   rescue:
-    - name: Obtain debug information
-      set_fact:
-        anyenv_config_home: "{{ ansible_env.XDG_CONFIG_HOME | default(ansible_env.HOME + '/.config') }}"
-        anyenv_init_path: "{{ anyenv_config_home }}/anyenv/anyenv-install"
-
     - name: Ensure anyenv initialized
       stat:
         path: "{{ anyenv_init_path }}"
@@ -28,8 +23,6 @@
       fail:
         msg: "Anyenv initialization failed"
       when: not anyenv_initialized.stat.exists
-
-  when: anyenv_installed.changed
 
 - name: Create plugins dir
   file:

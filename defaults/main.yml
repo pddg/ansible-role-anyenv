@@ -17,3 +17,6 @@ anyenv_plugins: []
 #   - pyenv
 #   - goenv
 anyenv_envs: []
+
+anyenv_config_home: "{{ ansible_env.XDG_CONFIG_HOME | default(ansible_env.HOME + '/.config') }}"
+anyenv_init_path: "{{ anyenv_config_home }}/anyenv/anyenv-install"
